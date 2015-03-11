@@ -1,5 +1,3 @@
-![logo](OBKK-client/assets/img/logo.png)
-
 ## Description
 **OBKK-Conference-Panel** - web-based application that supports conference OBKK
 
