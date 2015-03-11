@@ -1,0 +1,26 @@
+{
+  "name": "OBKK-server",
+  "version": "0.0.0",
+  "description": "OBKK server",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/2LO/OBKK-server"
+  },
+  "keywords": [
+    "server",
+    "obkk",
+    "node.js"
+  ],
+  "author": "Mateusz Bagiński",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/2LO/OBKK-server/issues"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5"
+  }
+}
