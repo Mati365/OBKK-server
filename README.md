@@ -1,7 +1,6 @@
-# OBKK-Conference-Panel
-![logo](frontend/assets/img/logo.png)
+![logo](OBKK-client/assets/img/logo.png)
 
-# OBKK-Conference-Panel
+## Description
 **OBKK-Conference-Panel** - web-based application that supports conference OBKK
 
 ## Browser Compatibility
