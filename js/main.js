@@ -1,5 +1,7 @@
-var express 	= 	require('express'),
-	path 		= 	require('path'),
+var express 	=	require('express'),
+	bodyParser  =   require('body-parser'),
+	jwt 		=   require('jwt-simple'),
+	path		=	require('path'),
 	_ 			=	require('underscore');
 
 /** Moduły aplikacji */
@@ -8,11 +10,14 @@ var express 	= 	require('express'),
 		db 		= require('./db.js'),
 		config  = require('./config.js'),
 	 	app 	= express();
-
-	/** Routing plików na serwerze */
+	/** Konfiguracja serwera */
+	app.set('jwtSecret', 'MOJA_SZKOLA_SMIERDZI');  
 	app.set('view engine', 'jade');
-
-	var routes = {
+	app.use(bodyParser.json());   
+	
+	/** Routing plików na serwerze */
+	var routing = require('./api/routing.js')(app),
+		routes  = {
 		'/assets' 	: 	'/assets',
 		'/lib' 		: 	'/assets/lib',
 		'/img' 		: 	'/assets/img',
@@ -34,9 +39,8 @@ var express 	= 	require('express'),
 		.get('/views/*.jade', function(req, res) {
 			res.render(req.params[0]);
 		});
-
-	/* Start serwera */
 	app.use('/', router);
+
 	var server = app.listen(3000, function() {
 		console.log('Server is starting..');
 	});
