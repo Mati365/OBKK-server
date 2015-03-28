@@ -1,7 +1,7 @@
 var mongoose = require('mongoose'),
-    _ 		 = require('underscore');
+    _ ######## = require('underscore');
 module.exports = function(schema) {
-	_.each(_.keys(schema), function(key) {
-		schema[key].required = true;
-	});
+####_.each(_.keys(schema), function(key) {
+########schema[key].required = true;
+####});
 };
