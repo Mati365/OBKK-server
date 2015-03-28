@@ -1,22 +1,31 @@
 var express = require('express'),
     jwt     = require('jwt-simple'),
-    user 	= require('../schemas/user.js'),
 	router  = express.Router();
+/** Schemas */
+var User 	= require('../schemas/user.js'),
+    Company = require('../schemas/company.js');
 
 router
 	/** Rejestracja użytkownika */
-	.put('/register', function(req, res) {
-		var data = req.body;
-		user.create({
-			email: data.user.email,
-			password: data.user.password,
-			info: {
-				name: data.user.name,
-				surname: data.user.surname,
-				phone: data.user.phone
+	.put('/register', function(req, res, next) {
+		var data    = req.body;
+		/** Tworzenie użytkownika */
+		var user = new User(data.user);
+		if(data.user.prelegant) {
+			/** TODO: Grupy i preleganci */
+		}
+		user.save(function(err) {
+			if(err)
+				next(err);
+			/** Rejestracja firmy */
+			if(data.company) {
+				var company = new Company(data.company);
+				company.admin = user._id;
+				company.save(function(err) {
+					if(err)
+						next(err);
+				});
 			}
-		}, function(err) {
-			console.log(err);
 		});
 	})
 	/** Logowanie użytkownika */
@@ -27,8 +36,4 @@ router
 	.post('/logout', function(req, res) {
 
 	});
-
-user.find({}, function(err, doc) {
-	console.log(doc);
-});
 module.exports = router;

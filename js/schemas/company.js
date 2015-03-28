@@ -4,11 +4,23 @@ var mongoose = require('mongoose'),
 
 /** Schema użytkownika do bazy danych */
 var companySchema = new Schema({
-    id: ObjectId,
     name: { 
         type: String, 
-        required: true 
+        required: true,
+        index: { unique: true } 
     },
+    admin: {
+        type: ObjectId,
+        required: true,
+        ref: 'User',
+        index: true
+    },
+    members: [
+        {
+            type: ObjectId,
+            ref: 'User'
+        }
+    ],
     nip: { 
         type: String, 
         required: true 
@@ -22,8 +34,8 @@ var companySchema = new Schema({
 });
 companySchema
 	/** Numer telefonu tylko 9 cyfrowy */
-	.path('info.code').validate(function(v) {
-		return /^\d{2}-\d{3}$/.test(v);
-	}, 'Nieprawidłowy kod pocztowy!');
+	.path('nip').validate(function(v) {
+		return /^\d{3}-\d{2}-\d{2}-\d{3}$/.test(v);
+	}, 'Nieprawidłowy NIP! Prawidłowa postać to XXX-XX-XX-XXX');
 
 module.exports = mongoose.model('Company', companySchema);
