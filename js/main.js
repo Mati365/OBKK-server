@@ -11,6 +11,10 @@ var express     =   require('express')
 
     /** Konfiguracja serwera */
     app
+        .use(function(req, res, next) {
+            res.set({'content-type': 'application/json; charset=utf-8'});
+            next();
+        })
         .set('view engine', 'jade')
         .use(bodyParser.json());   
     

@@ -1,5 +1,6 @@
 var express = require('express')
   , jwt     = require('jsonwebtoken')
+  , _       = require('underscore')
   , router  = express.Router()
   , config  = require('../config.js');
 
@@ -44,8 +45,17 @@ var api = (function() {
      */
     var getAccessToken = function(login, pass, exp, callback) {
         var auth = function(err, users) {
-            callback(!err && users[0].auth(pass)
-                ? jwt.sign(users[0], config('AUTH_SECRET'), { expiresInMinutes: 60*exp })
+            users = users.length && users[0];
+            callback(!err && users && users.auth(pass)
+                ? { token: 
+                        jwt.sign(
+                          { info:   users.info
+                          , email:  users.email
+                          , groups: users.groups
+                          }
+                        , config('AUTH_SECRET')
+                        , { expiresInMinutes: 60*exp })
+                  }
                 : null
             );
         };
@@ -64,16 +74,15 @@ var api = (function() {
 router
     /** Rejestracja użytkownika */
     .put('/register', function(req, res, next) {
-        var token = api.register(req.body.user, req.body.company, next);
+        api.register( req.body.user
+                    , req.body.company
+                    , next);
     })
     /** Logowanie użytkownika */
     .post('/login', function(req, res) {
-        res.json(
-            api.getAccessToken(res.body.login, res.body.password, 60)
-        );
-    })
-    /** Wylogowywanie użytkownika */
-    .post('/logout', function(req, res) {
-
+        api.getAccessToken( req.body.login
+                          , req.body.password
+                          , 60
+                          , _.bind(res.json, res));
     });
 module.exports = router;
