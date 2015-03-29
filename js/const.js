@@ -1,9 +1,8 @@
-var _     =    require('underscore');
+var _ = require('underscore');
 
 /** Prosta implementacja stałych w Node.JS */
 var Const = function() {
     var vars = {};
-
     /**
      * Pobieranie stałej z mapy
      * @param  {String} name Nazwa stałej
@@ -12,7 +11,6 @@ var Const = function() {
     this.$     =     function(name) {
         return vars[name];
     };
-
     /**
      * Definiowanie stałej
      * @return {Const} Uchwyt do this

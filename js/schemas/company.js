@@ -1,36 +1,31 @@
-var mongoose = require('mongoose'),
-    Schema      = mongoose.Schema,
-    ObjectId = Schema.ObjectId;
+var mongoose = require('mongoose')
+  , Schema   = mongoose.Schema
+  , ObjectId = Schema.ObjectId;
 
 /** Schema użytkownika do bazy danych */
 var companySchema = new Schema({
-    name: { 
-        type: String, 
-        required: true,
-        index: { unique: true } 
-    },
-    admin: {
-        type: ObjectId,
-        required: true,
-        ref: 'User',
-        index: true
-    },
-    members: [
-        {
-            type: ObjectId,
-            ref: 'User'
+      name: 
+        { type: String 
+        , required: true
+        , index: { unique: true }
         }
-    ],
-    nip: { 
-        type: String, 
-        required: true 
-    },
-    info: {
-        street: { type: String },
-        code: { type: String },
-        city: { type: String },
-        webpage: { type: String }
-    }
+    , admin: 
+        { type: ObjectId
+        , required: true
+        , ref: 'User'
+        , index: true
+        }
+    , members: [ { type: ObjectId, ref: 'User' } ]
+    , nip:
+        { type: String
+        , required: true 
+        }
+    , info: 
+        { street: { type: String }
+        , code: { type: String }
+        , city: { type: String }
+        , webpage: { type: String }
+        }
 });
 companySchema
     /** Numer telefonu tylko 9 cyfrowy */

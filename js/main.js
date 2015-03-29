@@ -1,33 +1,32 @@
-var express     =    require('express'),
-    bodyParser  =   require('body-parser'),
-    jwt         =   require('jwt-simple'),
-    path        =    require('path'),
-    _             =    require('underscore');
+var express     =   require('express')
+  , bodyParser  =   require('body-parser')
+  , path        =   require('path')
+  , _           =   require('underscore');
 
 /** Moduły aplikacji */
 (function() {
-    var
-        db         = require('./db.js'),
-        config  = require('./config.js'),
-         app     = express();
+    var db     = require('./db.js')
+      , config = require('./config.js')
+      , app    = express();
+
     /** Konfiguracja serwera */
-    app.set('jwtSecret', 'MOJA_SZKOLA_SMIERDZI');  
-    app.set('view engine', 'jade');
-    app.use(bodyParser.json());   
+    app
+        .set('view engine', 'jade')
+        .use(bodyParser.json());   
     
     /** Routing plików na serwerze */
     var routing = require('./api/routing.js')(app),
-        routes  = {
-        '/assets'     :     '/assets',
-        '/lib'         :     '/assets/lib',
-        '/img'         :     '/assets/img',
-        '/less'     :     '/assets/less',
-        '/js'         :     '/js'
-    };
+        routes  = 
+         { '/assets':  '/assets'
+         , '/lib':     '/assets/lib'
+         , '/img':     '/assets/img'
+         , '/less':    '/assets/less'
+         , '/js':      '/js'
+         };
     _.each(routes, function(folder, route) {
         app.use(route, express.static(path.join(__dirname, '../../OBKK-client' + folder)));
     });
-    app.set('views', path.join(__dirname, '../../OBKK-client/assets/views'));
+    app.set('views', path.join(__dirname, config('FRONTEND_PATH')+'/assets/views'));
 
     /* Routing API */
     var router = express.Router();

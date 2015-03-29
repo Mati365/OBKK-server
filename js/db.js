@@ -1,4 +1,4 @@
-var mongoose =    require('mongoose');
+var mongoose = require('mongoose');
 
 mongoose.connection
     .on('error', console.error)
