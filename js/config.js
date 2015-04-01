@@ -4,6 +4,6 @@
  */
 var constant = require('./const.js')({
       'FRONTEND_PATH': '../../OBKK-client/'
-  	, 'AUTH_SECRET': 'MOJA_SZKOLA_SMIERDZI_PS_TO_PRAWDA'   
+    , 'AUTH_SECRET': 'MOJA_SZKOLA_SMIERDZI_PS_TO_PRAWDA'   
 });
 module.exports = constant.$;
