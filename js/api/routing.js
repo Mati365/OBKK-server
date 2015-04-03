@@ -1,6 +1,6 @@
 var expressJwt  = require('express-jwt')
   , dir         = require('../dir.js')
-  , config 	    = require('../config.js');
+  , config      = require('../config.js');
 
 module.exports = function(app) {
     app.use('/api', expressJwt({
