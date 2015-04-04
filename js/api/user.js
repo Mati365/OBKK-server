@@ -92,10 +92,16 @@ router
         });
     })
     /** Logowanie użytkownika */
-    .post('/login', function(req, res) {
+    .post('/login', function(req, res, next) {
+        var callback = function(token) {
+            if(token)
+                res.json(token);
+            else
+                next('Nieprawidłowe dane logowania');
+        };
         api.getAccessToken( req.body.login
                           , req.body.password
                           , 60
-                          , _.bind(res.json, res));
+                          , callback);
     });
 module.exports = router;
