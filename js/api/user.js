@@ -6,8 +6,11 @@ var express = require('express')
   , config  = require('../config.js');
 
 /** Schemas */
-var User    = require('../schemas/user.js')
-  , Company = require('../schemas/company.js');
+var Schemas = require('../schemas/schemas.js')
+  , User    = Schemas.User
+  , Company = Schemas.Company
+  , Group   = Schemas.Group
+  , Feed    = Schemas.Feed;
 
 /** Funkcje API */
 var api = (function() {
@@ -20,18 +23,22 @@ var api = (function() {
     var register = function(user, company, callback) {
         async.waterfall(
             [ function(next) {
-                /** Rejestracja użytkownika */
+              /** Rejestracja użytkownika */
                 user = new User(user);
                 if(user.prelegant) {
                     /** TODO: Grupy i prelegenci */
                 }
                 user.save(function(err) {
+                    if(!err)
+                        Feed.create(
+                            { user: user._id
+                            , type: 'REGISTER'
+                            , data: { msg: 'zarejestrowano użytkownika' }
+                            });
                     next(err && 'Użytkownik o podanym emailu już istnieje');
                 });
               }
-              /**
-               * Rejestracja firmy
-               */
+              /** Rejestracja firmy */
             , function(next) {
                 if(typeof company === 'undefined')
                     return next(null);
@@ -39,6 +46,15 @@ var api = (function() {
                 company = new Company(company);
                 company.admin = user._id;
                 company.save(function(err) {
+                    if(!err)
+                        Feed.create(
+                            { user: user._id
+                            , type: 'COMPANY_REGISTER'
+                            , data: 
+                                { msg: 'zarejestrowano firmę'
+                                , company: company._id
+                                }
+                            });
                     next(err && 'Firma o podanej nazwie już istnieje');
                 });
               }

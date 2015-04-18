@@ -21,7 +21,16 @@ var userSchema = new Schema({
         , phone:   { type: String }
         }
     , groups: [ { type: ObjectId } ]
+    , orders: 
+        [ { type: String, ref: 'Order' } 
+        ]
 });
+userSchema
+    /** Pełne imię i nazwisko */
+    .virtual('info.full_name').get(function() {
+        return this.info.name+' '+this.info.surname;
+    });
+
 userSchema
     /**
      * Autoryzacja użytkownika, porównanie hashów
