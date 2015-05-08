@@ -40,7 +40,7 @@ var api = (function() {
               }
               /** Rejestracja firmy */
             , function(next) {
-                if(typeof company === 'undefined')
+                if(_.isEmpty(company))
                     return next(null);
                 
                 company = new Company(company);
@@ -78,13 +78,14 @@ var api = (function() {
                           , groups: users.groups
                           }
                         , config('AUTH_SECRET')
-                        , { expiresInMinutes: 60*exp })
+                        , { expiresInMinutes: 48 * 60 * exp })
                   }
                 : null
             );
         };
         User
-            .find({email: login})
+            .find({ email: login })
+            .populate('groups')
             .limit(1)
             .exec(auth);
     };
@@ -92,9 +93,7 @@ var api = (function() {
            , getAccessToken  :   getAccessToken
            };
 }());
-/**
- * Routing API
- */
+/** Routing api */
 router
     /** Rejestracja użytkownika */
     .put('/register', function(req, res, next) {

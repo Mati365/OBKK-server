@@ -20,15 +20,13 @@ var userSchema = new Schema({
         , surname: { type: String }
         , phone:   { type: String }
         }
-    , groups: [ { type: ObjectId } ]
-    , orders: 
-        [ { type: String, ref: 'Order' } 
-        ]
+    , groups: [ { type: ObjectId, ref: 'Group' } ]
+    , orders: [ { type: ObjectId, ref: 'Order' } ]
 });
 userSchema
     /** Pełne imię i nazwisko */
     .virtual('info.full_name').get(function() {
-        return this.info.name+' '+this.info.surname;
+        return this.info.name + ' ' + this.info.surname;
     });
 
 userSchema

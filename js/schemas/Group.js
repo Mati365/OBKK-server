@@ -8,10 +8,14 @@ var groupSchema = new Schema({
         { type: String
         , required: true
         , index: { unique: true }
-        } 
-    , flags : 
-        { type: Number
-        , required: true
+        }
+    , dom: 
+        { title: { type: String, required: true }
+        , logo: { type: String, required: true }
+        }
+    , data: 
+        { type: Schema.Types.Mixed
+        , required: false
         }
 });
-module.exports = mongoose.model('Group', groupSchema);;
+module.exports = mongoose.model('Group', groupSchema);

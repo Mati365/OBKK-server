@@ -48,7 +48,7 @@ var express     =   require('express')
         .use(function(err, req, res, next) {
             res.status(404);
             if(req.accepts('html'))
-                res.render('404/404.html');
+                res.render('error/404.html');
             else
                 res.send({status:404, message: err, type:'internal'});
         });
