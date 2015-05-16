@@ -1,6 +1,4 @@
-var express = require('express')
-  , jwt     = require('jsonwebtoken')
-  , router  = express.Router()
+var jwt     = require('jsonwebtoken')
   , config  = require('../config.js');
 
 /** Schemas */
@@ -19,18 +17,18 @@ var api = (function() {
             ])
             .exec(callback);
     };
-    return {
-        getFeeds: getFeeds
-    };
+    return  { getFeeds: getFeeds
+            };
 }());
 /**
  * Routing API
  */
-router
-    /** Listowanie feed */
-    .get('/', function(req, res, next) {
-        api.getFeeds(function(err, feeds) {
-            res.json(feeds);
+module.exports = function(router) {
+    router
+        /** Listowanie feed */
+        .get('/', function(req, res, next) {
+            api.getFeeds(function(err, feeds) {
+                res.json(feeds);
+            });
         });
-    });
-module.exports = router;
+};

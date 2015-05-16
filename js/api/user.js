@@ -1,15 +1,12 @@
-var express = require('express')
+var _       = require('underscore')
   , jwt     = require('jsonwebtoken')
-  , _       = require('underscore')
   , async   = require('async')
-  , router  = express.Router()
   , config  = require('../config.js');
 
 /** Schemas */
 var Schemas = require('../schemas/schemas.js')
   , User    = Schemas.User
   , Company = Schemas.Company
-  , Group   = Schemas.Group
   , Feed    = Schemas.Feed;
 
 /** Funkcje API */
@@ -89,34 +86,35 @@ var api = (function() {
             .limit(1)
             .exec(auth);
     };
-    return { register        :   register
-           , getAccessToken  :   getAccessToken
-           };
+    return  { register:   register
+            , getAccessToken:   getAccessToken
+            };
 }());
 /** Routing api */
-router
-    /** Rejestracja użytkownika */
-    .put('/register', function(req, res, next) {
-        api.register( req.body.user
-                    , req.body.company
-                    , function(err) {
-            if(!err)
-                res.sendStatus(200);
-            else
-                next(err);
+module.exports = function(router) {
+    router
+        /** Rejestracja użytkownika */
+        .put('/register', function(req, res, next) {
+            api.register( req.body.user
+                        , req.body.company
+                        , function(err) {
+                if(!err)
+                    res.sendStatus(200);
+                else
+                    next(err);
+            });
+        })
+        /** Logowanie użytkownika */
+        .post('/login', function(req, res, next) {
+            var callback = function(token) {
+                if(token)
+                    res.json(token);
+                else
+                    next('Nieprawidłowe dane logowania');
+            };
+            api.getAccessToken( req.body.login
+                              , req.body.password
+                              , 60
+                              , callback);
         });
-    })
-    /** Logowanie użytkownika */
-    .post('/login', function(req, res, next) {
-        var callback = function(token) {
-            if(token)
-                res.json(token);
-            else
-                next('Nieprawidłowe dane logowania');
-        };
-        api.getAccessToken( req.body.login
-                          , req.body.password
-                          , 60
-                          , callback);
-    });
-module.exports = router;
+};

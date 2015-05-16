@@ -1,6 +1,6 @@
-var mongoose   = require('mongoose')
-  , Schema     = mongoose.Schema
-  , ObjectId   = Schema.ObjectId;
+var mongoose = require('mongoose')
+  , Schema   = mongoose.Schema
+  , ObjectId = Schema.ObjectId;
 
 /** Schema użytkownika do bazy danych */
 var groupSchema = new Schema({
@@ -11,7 +11,7 @@ var groupSchema = new Schema({
         }
     , dom: 
         { title: { type: String, required: true }
-        , logo: { type: String, required: true }
+        , icon: { type: String, required: true }
         }
     , data: 
         { type: Schema.Types.Mixed

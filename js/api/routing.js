@@ -1,4 +1,5 @@
 var expressJwt  = require('express-jwt')
+  , express     = require('express')
   , dir         = require('../dir.js')
   , config      = require('../config.js');
 
@@ -8,6 +9,9 @@ module.exports = function(app) {
     }));
     dir(function(path) {
         if (path !== 'routing')
-            app.use('/' + path, require('./' + path + '.js'));
+            app.use('/' + path, [ 
+                r = express.Router(), 
+                require('./' + path + '.js')(r) 
+            ][0]);
     }, 'api');
 };

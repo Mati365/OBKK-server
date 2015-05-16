@@ -8,14 +8,14 @@ var Const = function() {
      * @param  {String} name Nazwa stałej
      * @return {Object}      Wartość stałej
      */
-    this.$     =     function(name) {
+    this.$ = function(name) {
         return vars[name];
     };
     /**
      * Definiowanie stałej
      * @return {Const} Uchwyt do this
      */
-    this.define =     function() {
+    this.define = function() {
         if(arguments.length === 2) 
             vars[arguments[0]] = arguments[1];
         else

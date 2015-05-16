@@ -1,8 +1,4 @@
-var express = require('express')
-  , jwt     = require('jsonwebtoken')
-  , _       = require('underscore')
-  , async   = require('async')
-  , router  = express.Router()
+var _       = require('underscore')
   , config  = require('../config.js');
 
 /** Schemas */
@@ -23,11 +19,12 @@ var api = (function() {
 /**
  * Routing API
  */
-router
-    /** Listowanie ofert */
-    .get('/', function(req, res, next) {
-        api.getOrders(function(err, orders) {
-            res.json(orders);
+module.exports = function(router) {
+    router
+        /** Listowanie ofert */
+        .get('/', function(req, res, next) {
+            api.getOrders(function(err, orders) {
+                res.json(orders);
+            });
         });
-    });
-module.exports = router;
+};
