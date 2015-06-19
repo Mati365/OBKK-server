@@ -12,6 +12,11 @@ var groupSchema = new Schema({
     , dom: 
         { title: { type: String, required: true }
         , icon: { type: String, required: true }
+        , links: 
+            [ { 
+                  title: { type: String, required: true }
+                , sref: { type: String, required: true }
+            } ]
         }
     , data: 
         { type: Schema.Types.Mixed

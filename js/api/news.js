@@ -12,8 +12,8 @@ var api = (function() {
             .limit(10)
             .sort('-date')
             .populate([
-                  {path:'user', select:'info.name info.surname'}
-                , {path:'data.company', select:'name'}
+                  { path:'user', select:'info.name info.surname' }
+                , { path:'data.company', select:'name' }
             ])
             .exec(callback);
     };

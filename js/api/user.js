@@ -9,6 +9,18 @@ var Schemas = require('../schemas/schemas.js')
   , Company = Schemas.Company
   , Feed    = Schemas.Feed;
 
+// new Schemas.Group({ 
+//       name: 'index'
+//     , dom: {
+//           title: 'Strona główna'
+//         , icon: 'home'
+//         , links: [
+//               { title: 'Wiadomości', sref: 'messages' }
+//             , { title: 'Wykłady', sref: 'lessons' }
+//         ]
+//     } 
+// }).save();
+
 /** Funkcje API */
 var api = (function() {
     /**
@@ -82,7 +94,7 @@ var api = (function() {
         };
         User
             .find({ email: login })
-            .populate('groups')
+            .populate('groups', '-_id -__v')
             .limit(1)
             .exec(auth);
     };

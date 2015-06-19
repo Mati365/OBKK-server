@@ -32,7 +32,7 @@ var api = (function() {
         User
             .find({})
             .select('email groups info.name info.surname')
-            .populate('groups', 'name dom.title -_id')
+            .populate('groups', 'name dom.icon -_id')
             .exec(callback);
     };
     /**

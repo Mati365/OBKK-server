@@ -20,11 +20,12 @@ var express     =   require('express')
     /** Routing plików na serwerze */
     var routing = require('./api/routing.js')(app),
         routes  = 
-         { '/assets':  '/assets'
-         , '/lib':     '/assets/lib'
-         , '/img':     '/assets/img'
-         , '/less':    '/assets/less'
+         { '/build':   '/build'
+         , '/data':    '/data'
+         , '/lib':     '/data/lib'
+         , '/img':     '/data/img'
          , '/js':      '/build/js'
+         , '/css':     '/build/css'
          };
     _.each(routes, function(folder, route) {
         app.use(route, express.static(path.join(__dirname, '../../OBKK-client' + folder)));
@@ -48,7 +49,7 @@ var express     =   require('express')
         .use(function(err, req, res, next) {
             res.status(404);
             if(req.accepts('html'))
-                res.render('error/404.html');
+                res.render('404.html');
             else
                 res.send({status:404, message: err, type:'internal'});
         });
