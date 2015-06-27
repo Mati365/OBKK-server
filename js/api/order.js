@@ -12,6 +12,7 @@ var api = (function() {
             Order
                 .find({})
                 .limit(10)
+                .select('name price')
                 .exec(callback);
         }
     };
