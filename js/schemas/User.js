@@ -1,7 +1,11 @@
 var mongoose = require('mongoose')
   , crypto   = require('crypto')
+  , _        = require('underscore')
+  , config   = require('../config')
+
   , Schema   = mongoose.Schema
   , ObjectId = Schema.ObjectId;
+
 
 /** Schema użytkownika do bazy danych */
 var userSchema = new Schema({
@@ -14,14 +18,22 @@ var userSchema = new Schema({
         { type: String
         , required: true
         }
-    , salt: { type: String }
+    , salt: String
     , info: 
-        { name:    { type: String }
-        , surname: { type: String }
-        , phone:   { type: String }
+        { name: String
+        , surname: String
+        , phone: String
         }
-    , groups: [ { type: ObjectId, ref: 'Group' } ]
+
+    , mods: [ { type: ObjectId, ref: 'Module' } ]
+    , access: 
+        { type: Number
+        , default: 0x1
+        , enum: _(config.ACCESS).values()
+        }
+
     , orders: [ { type: ObjectId, ref: 'Order' } ]
+    , disabled: Boolean
 });
 userSchema
     /** Pełne imię i nazwisko */
@@ -47,7 +59,7 @@ userSchema
         salt = salt || this.salt;
         return crypto
                     .createHash('md5')
-                    .update(this.salt + password)
+                    .update(salt + password)
                     .digest('hex');
     })
     /** Zapisywanie użytkownika do bazy */

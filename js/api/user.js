@@ -9,17 +9,6 @@ var Schemas = require('../schemas/schemas.js')
   , Company = Schemas.Company
   , Feed    = Schemas.Feed;
 
-// new Schemas.Group({ 
-//       name: 'index'
-//     , dom: {
-//           title: 'Strona główna'
-//         , icon: 'home'
-//         , links: [
-//               { title: 'Wiadomości', sref: 'messages' }
-//             , { title: 'Wykłady', sref: 'lessons' }
-//         ]
-//     } 
-// }).save();
 
 /** Funkcje API */
 var api = (function() {
@@ -30,12 +19,14 @@ var api = (function() {
      * @param  {Func}    callback Callback
      */
     var register = function(user, company, callback) {
+        var users = company.users;
         async.waterfall(
             [ function(next) {
-              /** Rejestracja użytkownika */
+                /** Rejestracja użytkownika */
                 user = new User(user);
                 if(user.prelegant) {
                     /** TODO: Grupy i prelegenci */
+                    user.access = 0x2;
                 }
                 user.save(function(err) {
                     if(!err)
@@ -47,11 +38,12 @@ var api = (function() {
                     next(err && 'Użytkownik o podanym emailu już istnieje');
                 });
               }
-              /** Rejestracja firmy */
             , function(next) {
-                if(_.isEmpty(company))
+                /** Rejestracja firmy */
+                if(_.isEmpty(company) || _.isEqual(company, { users: [] }))
                     return next(null);
                 
+                /** Użytkownicy, którzy muszą być potwierdzeni */
                 company = new Company(company);
                 company.admin = user._id;
                 company.save(function(err) {
@@ -67,7 +59,48 @@ var api = (function() {
                     next(err && 'Firma o podanej nazwie już istnieje');
                 });
               }
-            ], callback);
+            , function(next) {
+                /** Szukanie zduplikowanych użytkowników */
+                User.find({
+                    'email': { 
+                        $in: _(users).pluck('email') 
+                    }
+                }, function(err, docs) {
+                    next(docs.length 
+                        && 'Na liście znajduje się użytkownik, który jest już zarejestrowany w systemie!');
+                });
+            }
+            , function(next) {
+                /** Etap finalny, tworzenie użytkowników i dodawanie go do firmy */
+                async.each(
+                      users
+                    , function(tempUser, callback) {
+                        var u = new User({
+                              email: tempUser.email
+                            , password: ''
+                            , info: 
+                                { name: tempUser.name
+                                , surname: tempUser.surname
+                                }
+                            , disabled: true
+                        }).save(function(err, u) {
+                            company.members.push(u._id);
+                            callback();
+                        });
+                    }
+                    , function() {
+                        company.update({
+                            members: company.members
+                        }, next);
+                    });
+            } ], _(callback).wrap(function(fn, err) {
+                /** Sprzątanie po sobie */
+                if(err) {
+                    user.remove && user.remove();
+                    company.remove && company.remove();
+                }
+                fn(err);
+            }));
     };
     /**
      * Generowanie access token dla użytkownika

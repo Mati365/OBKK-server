@@ -21,10 +21,10 @@ var companySchema = new Schema({
         , required: true 
         }
     , info: 
-        { street: { type: String }
-        , code: { type: String }
-        , city: { type: String }
-        , webpage: { type: String }
+        { street: String
+        , code: String
+        , city: String
+        , webpage: String
         }
 });
 companySchema

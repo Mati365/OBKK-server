@@ -20,7 +20,7 @@ var feedSchema = new Schema({
         , enum: [ 'REGISTER', 'COMPANY_REGISTER' ]
         }
     , data: 
-        { msg: { type: String }
+        { msg: String
         , company: 
                 { type: ObjectId
                 , ref: 'Company'
