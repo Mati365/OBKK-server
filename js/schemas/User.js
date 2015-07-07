@@ -37,7 +37,7 @@ var userSchema = new Schema({
 });
 userSchema
     /** Pełne imię i nazwisko */
-    .virtual('info.full_name').get(function() {
+    .virtual('info.fullName').get(function() {
         return this.info.name + ' ' + this.info.surname;
     });
 

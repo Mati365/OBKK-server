@@ -1,6 +1,8 @@
 var _       = require('underscore')
   , jwt     = require('jsonwebtoken')
   , async   = require('async')
+  , colors  = require('colors')
+  , archy   = require('archy')
   , config  = require('../config.js');
 
 /** Schemas */
@@ -22,12 +24,13 @@ var api = (function() {
         var users = company.users;
         async.waterfall(
             [ function(next) {
-                /** Rejestracja użytkownika */
-                user = new User(user);
                 if(user.prelegant) {
                     /** TODO: Grupy i prelegenci */
                     user.access = 0x2;
                 }
+
+                /** Rejestracja użytkownika */
+                user = new User(user);
                 user.save(function(err) {
                     if(!err)
                         Feed.create(
@@ -102,6 +105,29 @@ var api = (function() {
                 fn(err);
             }));
     };
+
+    /**
+     * Zakończenie rejestracji użytkownika zarejestrowanego
+     * przez firmę
+     * @param  {string}       id        Identyfikator użytkownika
+     * @param  {CompleteForm} user      Dane potrzebne do zakończenia rejestracji
+     * @param  {Func}         callback  Callback
+     */
+    var completeRegistration = function(id, user, callback) {
+        User.findOne({ _id: id, disabled: true }, function(err, doc) {
+            if(!doc)
+                callback('Użytkownik został już aktywowany!');
+            else {
+                _(doc).extendOwn({
+                      disabled: false
+                    , password: user.password
+                    , info: { phone: user.phone }
+                });
+                doc.save();
+            }
+        });
+    };
+
     /**
      * Generowanie access token dla użytkownika
      * @param  {String}  login      Login
@@ -112,7 +138,7 @@ var api = (function() {
     var getAccessToken = function(login, pass, exp, callback) {
         var auth = function(err, users) {
             users = users.length && users[0];
-            callback(!err && users && users.auth(pass)
+            callback(!err && users && !users.disabled && users.auth(pass)
                 ? { token: 
                         jwt.sign(
                           { info:   users.info
@@ -120,7 +146,7 @@ var api = (function() {
                           , groups: users.groups
                           }
                         , config('AUTH_SECRET')
-                        , { expiresInMinutes: 48 * 60 * exp })
+                        , { expiresInMinutes: 48 * 360 * exp })
                   }
                 : null
             );
@@ -131,8 +157,9 @@ var api = (function() {
             .limit(1)
             .exec(auth);
     };
-    return  { register:   register
-            , getAccessToken:   getAccessToken
+    return  { register: register
+            , completeRegistration: completeRegistration
+            , getAccessToken: getAccessToken
             };
 }());
 /** Routing api */
@@ -143,11 +170,29 @@ module.exports = function(router) {
             api.register( req.body.user
                         , req.body.company
                         , function(err) {
-                if(!err)
+                if(!err) {
                     res.sendStatus(200);
-                else
+                    /** TODO: Logger */
+                    if(req.body.company.name) {
+                        console.log(('\n[ IP: ' + req.connection.remoteAddress).white.bold 
+                                    + ' ] ' + (req.body.company.name).bold.italic.red + '!');
+                        console.log(archy({
+                              label: 'Zarejestrowani uczestnicy:'.bold.green
+                            , nodes: _(req.body.company.users).map(function(u) { 
+                                return (u.name+' '+u.surname).italic +(' ('+u.email+') ').bold;
+                            })
+                        }));
+                    }
+                } else
                     next(err);
             });
+        })
+        /** Dopełnienie rejestracji */
+        .put('/complete/:id', function(req, res, next) {
+            api.completeRegistration(
+                      req.params['id']
+                    , req.body.user
+                    , next);
         })
         /** Logowanie użytkownika */
         .post('/login', function(req, res, next) {
