@@ -22,9 +22,9 @@ var feedSchema = new Schema({
     , data: 
         { msg: String
         , company: 
-                { type: ObjectId
-                , ref: 'Company'
-                }     
+            { type: ObjectId
+            , ref: 'Company'
+            }     
         }
 });
 module.exports = mongoose.model('Feed', feedSchema);

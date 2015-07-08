@@ -3,7 +3,8 @@ var _       = require('underscore')
   , async   = require('async')
   , colors  = require('colors')
   , archy   = require('archy')
-  , config  = require('../config.js');
+  , config  = require('../config.js')
+  , mail    = require('../mail.js');
 
 /** Schemas */
 var Schemas = require('../schemas/schemas.js')
@@ -21,82 +22,107 @@ var api = (function() {
      * @param  {Func}    callback Callback
      */
     var register = function(user, company, callback) {
-        var users = company.users;
-        async.waterfall(
-            [ function(next) {
-                if(user.prelegant) {
-                    /** TODO: Grupy i prelegenci */
-                    user.access = 0x2;
-                }
+        /** Tworzenie użytkownika */
+        var createUser = function(next) {
+            if(user.prelegant)
+                user.access = 0x2;
 
-                /** Rejestracja użytkownika */
-                user = new User(user);
-                user.save(function(err) {
-                    if(!err)
-                        Feed.create(
-                            { user: user._id
-                            , type: 'REGISTER'
-                            , data: { msg: 'zarejestrowano użytkownika' }
-                            });
-                    next(err && 'Użytkownik o podanym emailu już istnieje');
-                });
-              }
-            , function(next) {
-                /** Rejestracja firmy */
-                if(_.isEmpty(company) || _.isEqual(company, { users: [] }))
-                    return next(null);
-                
-                /** Użytkownicy, którzy muszą być potwierdzeni */
-                company = new Company(company);
-                company.admin = user._id;
-                company.save(function(err) {
-                    if(!err)
-                        Feed.create(
-                            { user: user._id
-                            , type: 'COMPANY_REGISTER'
-                            , data: 
-                                { msg: 'zarejestrowano firmę'
-                                , company: company._id
-                                }
-                            });
-                    next(err && 'Firma o podanej nazwie już istnieje');
-                });
-              }
-            , function(next) {
+            /** Rejestracja użytkownika */
+            user = new User(user);
+            user.save(function(err) {
+                if(!err)
+                    Feed.create(
+                        { user: user._id
+                        , type: 'REGISTER'
+                        , data: { msg: 'zarejestrowano użytkownika' }
+                        });
+                next(err && 'Użytkownik o podanym emailu już istnieje');
+            });
+        };
+
+        /** Tworzenie firmy */
+        var createCompany = function(next) {
+            /** Rejestracja firmy */
+            if(_.isEmpty(company) || _.isEqual(company, { users: [] }))
+                return next(null);
+            
+            /** Cache bo obiektu są kasowane */
+            var cache = {
+                  users: company.users
+                , copyOrders: company.copyOrders
+            };
+
+            /** Użytkownicy, którzy muszą być potwierdzeni */
+            company = new Company(company);
+            company.admin = user._id;
+            company.save(function(err) {
+                if(!err)
+                    Feed.create(
+                        { user: user._id
+                        , type: 'COMPANY_REGISTER'
+                        , data: 
+                            { msg: 'zarejestrowano firmę'
+                            , company: company._id
+                            }
+                        });
+                next(err && 'Firma o podanej nazwie już istnieje', cache);
+            });
+        };
+
+        /** Etap finalny, tworzenie użytkowników i dodawanie go do firmy */
+        var createMember = function(cache, tempUser, callback) {
+            var u = new User({
+                  email: tempUser.email
+                , password: ''
+                , info: 
+                    { name: tempUser.name
+                    , surname: tempUser.surname
+                    }
+                , disabled: true
+            }).save(function(err, u) {
+                /** Wysyłanie emaila */
+                mail.send( 'Dokończenie rejestracji konta - OBKK'
+                         , config.MAIL.COMPLETE_REGISTRATION
+                         , { company: company.name
+                           , url: config.SERVER_URL
+                           , user: u
+                           , orders: encodeURIComponent(JSON.stringify(cache.copyOrders ? user.orders : []))
+                           }
+                         , tempUser.email)
+
+                /** Dodawanie ID usera do listy firmy */
+                company.members.push(u._id);
+                callback();
+            });
+        };
+
+        async.waterfall(
+            [ createUser
+            , createCompany
+            , function(cache, next) {
                 /** Szukanie zduplikowanych użytkowników */
                 User.find({
                     'email': { 
-                        $in: _(users).pluck('email') 
+                        $in: _(cache.users).pluck('email') 
                     }
                 }, function(err, docs) {
-                    next(docs.length 
-                        && 'Na liście znajduje się użytkownik, który jest już zarejestrowany w systemie!');
+                    next( docs.length
+                            && 'Na liście znajduje się użytkownik, który jest już zarejestrowany w systemie!'
+                        , cache);
                 });
-            }
-            , function(next) {
-                /** Etap finalny, tworzenie użytkowników i dodawanie go do firmy */
+              }
+            , function(cache, next) {
+                /** Współbieżne tworzenie nowych użytkowników */
                 async.each(
-                      users
-                    , function(tempUser, callback) {
-                        var u = new User({
-                              email: tempUser.email
-                            , password: ''
-                            , info: 
-                                { name: tempUser.name
-                                , surname: tempUser.surname
-                                }
-                            , disabled: true
-                        }).save(function(err, u) {
-                            company.members.push(u._id);
-                            callback();
-                        });
-                    }
+                      cache.users
+                    , createMember.bind(this, cache)
                     , function() {
-                        company.update({
-                            members: company.members
+                        company.update({ 
+                            members: company.members 
                         }, next);
                     });
-            } ], _(callback).wrap(function(fn, err) {
+            } ]
+            , _(callback).wrap(function(fn, err) {
                 /** Sprzątanie po sobie */
                 if(err) {
                     user.remove && user.remove();
@@ -145,7 +171,7 @@ var api = (function() {
                           , email:  users.email
                           , groups: users.groups
                           }
-                        , config('AUTH_SECRET')
+                        , config.AUTH_SECRET
                         , { expiresInMinutes: 48 * 360 * exp })
                   }
                 : null

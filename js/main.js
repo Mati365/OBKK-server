@@ -28,9 +28,9 @@ var express     =   require('express')
          , '/css':     '/build/css'
          };
     _.each(routes, function(folder, route) {
-        app.use(route, express.static(path.join(__dirname, config.$('FRONTEND_PATH') + folder)));
+        app.use(route, express.static(path.join(__dirname, config.FRONTEND_PATH + folder)));
     });
-    app.set('views', path.join(__dirname, config.$('FRONTEND_PATH') + '/build/views'));
+    app.set('views', path.join(__dirname, config.FRONTEND_PATH + '/build/views'));
 
     /** Routing API */
     var router = express.Router();
@@ -53,7 +53,7 @@ var express     =   require('express')
     //         else
     //             res.send({status:404, message: err, type:'internal'});
     //     });
-
+    
     /** Start serwera */
     var server = app.listen(3000, function() {
         console.log('Server is starting..');
