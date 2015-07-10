@@ -226,7 +226,7 @@ module.exports = function(router) {
                 if(token)
                     res.json(token);
                 else
-                    next('Nieprawidłowe dane logowania');
+                    next('Nieprawidłowe dane logowania!');
             };
             api.getAccessToken( req.body.login
                               , req.body.password

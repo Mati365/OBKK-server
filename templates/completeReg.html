@@ -29,7 +29,6 @@
                 text-align: justify;
             }
             .container .col50 img {
-                  max-width:  256px;
                   max-height: 256px;
                   width:      auto;
                   height:     auto;
@@ -54,7 +53,7 @@
             <div class="col50">
                 <h3> Witamy <%= user.info.name %> <%= user.info.surname %>! </h3>
                 <div class="description">
-                    Firma <%= company %> zarejestrowała Ciebie jako uczestnika konferencji OBKK. Aby dopełnić rejestracji proszę wprowadzić dodatkowe informacje potrzebne do poprawnego działania konta pod podanym adresem.
+                    Firma <i><%= company %></i> zarejestrowała Cię jako uczestnika konferencji OBKK. Aby dopełnić rejestracji proszę wprowadzić dodatkowe informacje potrzebne do poprawnego działania konta pod podanym adresem.
                     <p class="smallest">
                         <strong>Link:</strong> 
                         <a href='<%= url %>/#/register/complete?id=<%= user.id %>&orders=<%= orders %>'> Kliknij tutaj by dokończyć rejestracje!

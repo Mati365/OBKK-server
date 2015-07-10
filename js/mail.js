@@ -17,7 +17,7 @@ var transporter = mail.createTransport({
  * @param  {string} title    Tytuł wiadomości
  * @param  {string} template Szablon wiadomości
  * @param  {Array}  params   Parametry do szablonu
- * @param  {string  to       Adres email odbiorcy
+ * @param  {string} to       Adres email odbiorcy
  */
 module.exports.send = function(title, template, params, to) {
     transporter.sendMail({
