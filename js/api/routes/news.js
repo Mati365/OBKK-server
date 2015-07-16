@@ -1,12 +1,12 @@
 var jwt     = require('jsonwebtoken')
-  , config  = require('../config.js');
+  , config  = require('../../config.js');
 
 /** Schemas */
-var Feed    = require('../schemas/schemas.js').Feed;
+var Feed    = require('../../schemas/schemas.js').Feed;
 
 /** Funkcje API */
 var api = (function() {
-    var getFeeds = function(callback) {
+    var getFeeds = function() {
         Feed
             .find()
             .limit(10)
@@ -15,7 +15,7 @@ var api = (function() {
                   { path:'user', select:'info.name info.surname' }
                 , { path:'data.company', select:'name' }
             ])
-            .exec(callback);
+            .exec();
     };
     return  { getFeeds: getFeeds
             };
@@ -27,8 +27,8 @@ module.exports = function(router) {
     router
         /** Listowanie feed */
         .get('/', function(req, res, next) {
-            api.getFeeds(function(err, feeds) {
-                res.json(feeds);
-            });
+            api
+                .getFeeds()
+                .exec(res.json.bind(res));
         });
 };

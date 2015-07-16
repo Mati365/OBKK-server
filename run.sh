@@ -1,4 +1,7 @@
-#!/bin/sh
+#!/bin/bash
+while read line; do export "$line";
+	done < config.env
+
 cmd_exists() {
 	type "$1" &> /dev/null ;
 }

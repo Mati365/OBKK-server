@@ -1,4 +1,6 @@
-var fs = require('fs');
+var fs = require('fs')
+  , _  = require('underscore');
+
 (function() {
     /** Synchroniczne ładowanie plików */
     require.extensions['.html'] = function (module, filename) {
@@ -10,12 +12,14 @@ var fs = require('fs');
  * Konfiguracja serwisu jest stała, 
  * dlatego nie jest zwykłym assocem
  */
-module.exports = {
-      FRONTEND_PATH: '../../client/'
-    , AUTH_SECRET: 'MOJA_SZKOLA_SMIERDZI_PS_TO_PRAWDA' 
-    , SERVER_URL: 'http://localhost:3000' 
-    , MAIL: {
-          FROM: 'cziken58@gmail.com'
+var envConfig = _(process.env).pick(
+      'FRONTEND_PATH'
+    , 'AUTH_SECRET'
+);
+module.exports = _.extend(envConfig, {
+    MAIL: {
+          USER: process.env.SERVER_EMAIL_USER
+        , PASS: process.env.SERVER_EMAIL_PASS
         , DONE_REGISTRATION:     require('../templates/accountReg.html')
         , COMPLETE_REGISTRATION: require('../templates/completeReg.html')
     }
@@ -24,4 +28,4 @@ module.exports = {
         , MODERATOR: 0x2
         , USER:      0x1
     }
-};
+});

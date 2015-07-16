@@ -7,8 +7,8 @@ var mail    = require('nodemailer')
 var transporter = mail.createTransport({
       service: 'Gmail'
     , auth: {
-          user: ''
-        , pass: ''
+          user: config.MAIL.USER
+        , pass: config.MAIL.PASS
     }
 });
 
@@ -21,7 +21,7 @@ var transporter = mail.createTransport({
  */
 module.exports.send = function(title, template, params, to) {
     transporter.sendMail({
-          from: config.MAIL.FROM
+          from: config.MAIL.user
         , to: to
         , subject: title
         , html: juice(_.template(template)(params))
