@@ -1,5 +1,9 @@
 var mongoose = require('mongoose')
-  , Schema   = mongoose.Schema  
+  , _        = require('underscore')
+  , config   = require('../config.js');
+
+/** Schemas */
+var Schema   = mongoose.Schema
   , ObjectId = Schema.ObjectId;
 
 /** Schema użytkownika do bazy danych */
@@ -17,14 +21,15 @@ var feedSchema = new Schema({
     , type:
         { type: String
         , required: true
-        , enum: [ 'REGISTER', 'COMPANY_REGISTER' ]
+        , enum: _(config.FEEDS).values()
         }
     , data: 
         { msg: String
         , company: 
             { type: ObjectId
             , ref: 'Company'
-            }     
+            }
+        , opt: Object
         }
 });
 module.exports = mongoose.model('Feed', feedSchema);

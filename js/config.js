@@ -15,13 +15,19 @@ var fs = require('fs')
 var envConfig = _(process.env).pick(
       'FRONTEND_PATH'
     , 'AUTH_SECRET'
+    , 'SERVER_URL'
 );
 module.exports = _.extend(envConfig, {
-    MAIL: {
+      MAIL: {
           USER: process.env.SERVER_EMAIL_USER
         , PASS: process.env.SERVER_EMAIL_PASS
         , DONE_REGISTRATION:     require('../templates/accountReg.html')
         , COMPLETE_REGISTRATION: require('../templates/completeReg.html')
+    }
+    , FEEDS: {
+          REGISTER:         0x1 /** Rejestracja usera */
+        , COMPANY_REGISTER: 0x2 /** Rejestracja firmy */
+        , POST:             0x3 /** Post użytkownika */
     }
     , ACCESS: {
           ADMIN:     0x4

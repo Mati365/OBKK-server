@@ -1,6 +1,3 @@
-var _       = require('underscore')
-  , config  = require('../../config.js');
-
 /** Schemas */
 var Order   = require('../../schemas/schemas.js').Order;
 

@@ -1,6 +1,4 @@
-var _           = require('underscore')
-  , expressJwt  = require('express-jwt')
-  , config      = require('../../config.js');
+var permission  = require('../permission.js');
 
 /** Schemas */
 var Schemas = require('../../schemas/schemas.js')
@@ -61,30 +59,37 @@ var api = (function() {
             .remove()
             .exec();
     };
-    return  { userInfo: userInfo
-            , updateUser: updateUser
-            , listUsers: listUsers
-            , deleteUser: deleteUser
-            , describeMods: describeMods
-            };
+
+    return { userInfo: userInfo
+           , updateUser: updateUser
+           , listUsers: listUsers
+           , deleteUser: deleteUser
+           , auth:
+                { describeMods: describeMods
+                }
+           };
 }());
 /** Routing api */
 module.exports = function(router) {
     router
-        .use(expressJwt({
-            secret: config.AUTH_SECRET
-        }))
+        .use(permission.loggedOnly)
 
         /** API chronione */
         .get('/info', function(req, res) {
         })
         .get('/mods', function(req, res) {
-            api.describeMods(req.user.mods).then(res.json.bind(res));
+            api.auth
+                .describeMods(req.user.mods)
+                .then(res.json.bind(res));
         })
+
+        /** API publiczne */
         .route('/:id')
             /** Informacje u użytkowniku */
             .get(function(req, res) {
-                api.userInfo(req.params.id).then(res.json.bind(res));
+                api
+                    .userInfo(req.params.id)
+                    .then(res.json.bind(res));
             })
             /** Kasowanie użytkownika */
             .delete(function(req) {

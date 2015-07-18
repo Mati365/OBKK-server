@@ -2,6 +2,7 @@ var _       = require('underscore')
   , jwt     = require('jsonwebtoken')
   , async   = require('async')
   , archy   = require('archy')
+  , colors  = require('colors')
   , config  = require('../../config.js')
   , mail    = require('../../mail.js');
 
@@ -10,7 +11,7 @@ var Schemas = require('../../schemas/schemas.js')
   , User    = Schemas.User
   , Company = Schemas.Company
   , Feed    = Schemas.Feed
-  , Module = Schemas.Module;
+  , Module  = Schemas.Module;
 
 var api = (function() {
     /**
@@ -31,8 +32,8 @@ var api = (function() {
                 if(!err)
                     Feed.create(
                         { user: user._id
-                            , type: 'REGISTER'
-                            , data: { msg: 'zarejestrowano użytkownika' }
+                        , type: config.FEEDS.REGISTER
+                        , data: { msg: 'zarejestrowano użytkownika' }
                         });
                 next(err && 'Użytkownik o podanym emailu już istnieje');
             });
@@ -46,7 +47,7 @@ var api = (function() {
 
             /** Cache bo obiektu są kasowane */
             var cache = {
-                users: company.users
+                  users: company.users
                 , copyOrders: company.copyOrders
             };
 
@@ -57,11 +58,11 @@ var api = (function() {
                 if(!err)
                     Feed.create(
                         { user: user._id
-                            , type: 'COMPANY_REGISTER'
-                            , data:
-                        { msg: 'zarejestrowano firmę'
+                        , type: config.FEEDS.COMPANY_REGISTER
+                        , data:
+                            { msg: 'zarejestrowano firmę'
                             , company: company._id
-                        }
+                            }
                         });
                 next(err && 'Firma o podanej nazwie już istnieje', cache);
             });
@@ -69,23 +70,23 @@ var api = (function() {
 
         /** Etap finalny, tworzenie użytkowników i dodawanie go do firmy */
         var createMember = function(cache, tempUser, callback) {
-            var u = new User({
-                email: tempUser.email
+            new User({
+                  email: tempUser.email
                 , password: ''
                 , info:
-                { name: tempUser.name
+                    { name: tempUser.name
                     , surname: tempUser.surname
-                }
+                    }
                 , disabled: true
             }).save(function(err, u) {
                     /** Wysyłanie emaila */
                     mail.send( 'Dokończenie rejestracji konta - OBKK'
                         , config.MAIL.COMPLETE_REGISTRATION
                         , { company: company.name
-                            , url: config.SERVER_URL
-                            , user: u
-                            , orders: encodeURIComponent(JSON.stringify(cache.copyOrders ? user.orders : []))
-                        }
+                          , url: config.SERVER_URL
+                          , user: u
+                          , orders: encodeURIComponent(JSON.stringify(cache.copyOrders ? user.orders : []))
+                          }
                         , tempUser.email);
 
                     /** Dodawanie ID usera do listy firmy */
@@ -96,29 +97,28 @@ var api = (function() {
 
         async.waterfall(
             [ createUser
-                , createCompany
-                , function(cache, next) {
+            , createCompany
+            , function(cache, next) {
                 /** Szukanie zduplikowanych użytkowników */
                 User.find({
                     'email': {
                         $in: _(cache.users).pluck('email')
                     }
                 }, function(err, docs) {
-                    next( docs.length
-                        && 'Na liście znajduje się użytkownik, który jest już zarejestrowany w systemie!'
+                    next( docs.length && 'Na liście znajduje się użytkownik, który jest już zarejestrowany w systemie!'
                         , cache);
                 });
             }
-                , function(cache, next) {
-                /** Współbieżne tworzenie nowych użytkowników */
-                async.each(
-                    cache.users
-                    , createMember.bind(this, cache)
-                    , function() {
-                        company.update({
-                            members: company.members
-                        }, next);
-                    });
+            , function(cache, next) {
+            /** Współbieżne tworzenie nowych użytkowników */
+            async.each(
+                  cache.users
+                , createMember.bind(this, cache)
+                , function() {
+                    company.update({
+                        members: company.members
+                    }, next);
+                });
             } ]
             , _(callback).wrap(function(fn, err) {
                 /** Sprzątanie po sobie */
@@ -143,7 +143,7 @@ var api = (function() {
                 callback('Użytkownik został już aktywowany!');
             else {
                 _(doc).extendOwn({
-                    disabled: false
+                      disabled: false
                     , password: user.password
                     , info: { phone: user.phone }
                 });
@@ -162,22 +162,22 @@ var api = (function() {
     var getAccessToken = function(login, pass, exp, callback) {
         var auth = function(err, users) {
             users = users.length && users[0];
-            callback(!err && users && !users.disabled && users.auth(pass)
-                    ? { token:
+            callback(!err && users && !users.disabled && users.auth(pass) ?
+                { token:
                     jwt.sign(
-                        { info:   users.info
-                            , email:  users.email
-                            , mods:   _(users.mods).pluck('name')
+                        { id:     users._id
+                        , info:   users.info
+                        , email:  users.email
+                        , mods:   _(users.mods).pluck('name')
                         }
                         , config.AUTH_SECRET
                         , { expiresInMinutes: 48 * 360 * exp })
-                }
-                    : null
+                } : null
             );
         };
         User
             .find({ email: login })
-            .populate('mods', '-_id -__v')
+            .populate('mods', '-__v')
             .limit(1)
             .exec(auth);
     };
@@ -223,7 +223,7 @@ module.exports = function(router) {
         /** Dopełnienie rejestracji */
         .put('/register/:id', function(req, res, next) {
             api.completeRegistration(
-                req.params['id']
+                  req.params['id']
                 , req.body.user
                 , next);
         })
