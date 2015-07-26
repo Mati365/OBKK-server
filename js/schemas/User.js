@@ -2,10 +2,10 @@ var mongoose = require('mongoose')
   , crypto   = require('crypto')
   , _        = require('underscore')
   , config   = require('../config')
+  , flags    = require('../flags')
 
   , Schema   = mongoose.Schema
   , ObjectId = Schema.ObjectId;
-
 
 /** Schema użytkownika do bazy danych */
 var userSchema = new Schema({
@@ -23,22 +23,32 @@ var userSchema = new Schema({
         { name: String
         , surname: String
         , phone: String
+        , description: String
         }
 
-    , mods: [ { type: ObjectId, ref: 'Module' } ]
+    , mods: [{ type: ObjectId, ref: 'Module' }]
     , access: 
         { type: Number
         , default: 0x1
         , enum: _(config.ACCESS).values()
         }
 
-    , orders: [ { type: ObjectId, ref: 'Order' } ]
+    , orders: [{ type: ObjectId, ref: 'Order' }]
+    , inbox: [{
+          name: String
+        , icon: String
+        , flags: { type: Number, default: 0 }
+        , mails: [{ type: ObjectId, ref: 'Mail' }]
+    }]
     , disabled: Boolean
+}, {
+      toObject: { virtuals: true }
+    , toJSON: { virtuals: true }
 });
 userSchema
     /** Pełne imię i nazwisko */
     .virtual('info.fullName').get(function() {
-        return this.info.name + ' ' + this.info.surname;
+        return [ this.info.name, this.info.surname ].join(' ');
     });
 
 userSchema
@@ -64,8 +74,20 @@ userSchema
     })
     /** Zapisywanie użytkownika do bazy */
     .pre('save', function(next) {
+        var self = this;
         this.salt = crypto.randomBytes(16);
         this.password = this.encryptPassword(this.password);
+
+        /** Tworzenie podstawowych folderów email użytkownika */
+        if(!this.inbox || !this.inbox.length)
+            _(config.MAIL_FOLDERS).each(function(val) {
+                self.inbox.push(
+                    { name: val[0]
+                    , icon: val[1]
+                    , mails: []
+                    , flags: val != config.MAIL_FOLDERS.SENT ? flags.Inbox.MAIL_GROUPING : 0 // Wysłanych nie grupuje bo ten sam nadawca
+                    });
+            });
         next();
     })
     /** Numer telefonu tylko 9 cyfrowy */

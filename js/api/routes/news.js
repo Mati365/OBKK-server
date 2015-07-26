@@ -1,7 +1,6 @@
 var q           = require('q')
-  , async       = require('async')
   , _           = require('underscore')
-  , config      = require('../../config.js')
+  , flags       = require('../../flags.js')
   , permission  = require('../permission.js')
   , Feed        = require('../../schemas/schemas.js').Feed;
 
@@ -9,30 +8,27 @@ var q           = require('q')
 var api = (function() {
     /** Zwracanie aktualności i akcji użytkowników */
     var getFeeds = function() {
-        var defer = q.defer()
-          , get   = function(types, callback) {
-                Feed
-                    .find()
-                    .limit(5)
-                    .sort('-date')
-                    .where('type').in(types)
-                    .populate([
-                          { path:'user', select:'info.name info.surname' }
-                        , { path:'data.company', select:'name' }
-                    ])
-                    .exec(callback);
-            };
+        var get = function(types) {
+            return Feed
+                .find()
+                .limit(5)
+                .sort('-date')
+                .where('type').in(types)
+                .populate([
+                      { path:'user', select:'info.name info.surname' }
+                    , { path:'data.company', select:'name' }
+                ])
+                .exec();
+        };
 
-        const f = config.FEEDS;
-        async.parallel([
-              get.bind(null, [ f.REGISTER, f.COMPANY_REGISTER ])
-            , get.bind(null, [ f.POST ])
-        ], function(err, results) {
-            defer.resolve(
-                _.object([ 'news', 'posts' ], results)
-            );
-        });
-        return defer.promise;
+        const f = flags.Feeds;
+        return q
+            .all([
+                  get([ f.REGISTER, f.COMPANY_REGISTER ])
+                , get([ f.POST ])
+            ])
+            .then(
+                _.object.bind(q, [ 'news', 'posts' ]));
     };
 
     /**
@@ -43,7 +39,7 @@ var api = (function() {
      */
     var sendFeed = function(user, type, data) {
         return Feed.create({
-              user: user.id
+              user: user._id
             , type: type
             , data: data
         });

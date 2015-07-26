@@ -3,7 +3,7 @@ var _   = require('underscore')
 
 (function() {
     dir(function(path) {
-        if (path !== 'schemas')
+        if (!([ 'schemas', 'flags'].indexOf(path) + 1))
             module.exports[path] = require('./' + path + '.js');
     }, 'schemas');
 }());

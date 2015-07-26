@@ -6,9 +6,11 @@ var express     =   require('express')
 
 /** Moduły aplikacji */
 (function() {
-    var db     = require('./db.js')
-      , config = require('./config.js')
-      , app    = express();
+    var db      = require('./db.js')
+      , config  = require('./config.js')
+      , routing = require('./api/routing.js')
+      , utils   = require('./utils.js')
+      , app     = express();
 
     /** Konfiguracja serwera */
     app
@@ -18,19 +20,20 @@ var express     =   require('express')
         .use(bodyParser.json());   
     
     /** Routing plików na serwerze */
-    var routing = require('./api/routing.js')(app),
-        routes  = 
-         { '/build':   '/build'
-         , '/data':    '/data'
-         , '/lib':     '/data/lib'
-         , '/img':     '/data/img'
-         , '/js':      '/build/js'
-         , '/css':     '/build/css'
-         };
+    var routes =
+            { '/build':   '/build'
+            , '/data':    '/data'
+            , '/lib':     '/data/lib'
+            , '/img':     '/data/img'
+            , '/js':      '/build/js'
+            , '/css':     '/build/css'
+            };
     _.each(routes, function(folder, route) {
         app.use(route, express.static(path.join(__dirname, '../' + config.FRONTEND_PATH + folder)));
     });
-    app.set('views', path.join(__dirname, '../' + config.FRONTEND_PATH + '/build/views'));
+    routing
+        .requireRoutes(app, '/')
+        .set('views', path.join(__dirname, '../' + config.FRONTEND_PATH + '/build/views'));
 
     /** Routing API */
     var router = express.Router();

@@ -4,6 +4,7 @@ var _       = require('underscore')
   , archy   = require('archy')
   , colors  = require('colors')
   , config  = require('../../config.js')
+  , flags   = require('../../flags.js')
   , mail    = require('../../mail.js');
 
 /** Schemas */
@@ -32,7 +33,7 @@ var api = (function() {
                 if(!err)
                     Feed.create(
                         { user: user._id
-                        , type: config.FEEDS.REGISTER
+                        , type: flags.Feeds.REGISTER
                         , data: { msg: 'zarejestrowano użytkownika' }
                         });
                 next(err && 'Użytkownik o podanym emailu już istnieje');
@@ -58,7 +59,7 @@ var api = (function() {
                 if(!err)
                     Feed.create(
                         { user: user._id
-                        , type: config.FEEDS.COMPANY_REGISTER
+                        , type: flags.Feeds.COMPANY_REGISTER
                         , data:
                             { msg: 'zarejestrowano firmę'
                             , company: company._id
@@ -165,7 +166,7 @@ var api = (function() {
             callback(!err && users && !users.disabled && users.auth(pass) ?
                 { token:
                     jwt.sign(
-                        { id:     users._id
+                        { _id:    users._id
                         , info:   users.info
                         , email:  users.email
                         , mods:   _(users.mods).pluck('name')

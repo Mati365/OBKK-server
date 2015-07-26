@@ -24,14 +24,9 @@ module.exports = _.extend(envConfig, {
         , DONE_REGISTRATION:     require('../templates/accountReg.html')
         , COMPLETE_REGISTRATION: require('../templates/completeReg.html')
     }
-    , FEEDS: {
-          REGISTER:         0x1 /** Rejestracja usera */
-        , COMPANY_REGISTER: 0x2 /** Rejestracja firmy */
-        , POST:             0x3 /** Post użytkownika */
-    }
-    , ACCESS: {
-          ADMIN:     0x4
-        , MODERATOR: 0x2
-        , USER:      0x1
+    , MAIL_FOLDERS: {
+          RECEIVED: [ 'Odebrane',  'inbox' ]  /** Folder otrzymywanych wiadomości */
+        , SENT:     [ 'Wysłane',   'send'  ]  /** Folder wysłanych wiadomości */
+        , REMOVED:  [ 'Skasowane', 'trash' ]  /** Folder usuniętych wiadomości */
     }
 });

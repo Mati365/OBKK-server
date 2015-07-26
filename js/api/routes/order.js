@@ -20,7 +20,7 @@ var api = (function() {
 module.exports = function(router) {
     router
         /** Listowanie ofert */
-        .get('/', function(req, res, next) {
+        .get('/', function(req, res) {
             api
                 .getOrders()
                 .then(res.json.bind(res));

@@ -1,12 +1,18 @@
-var express     = require('express')
-  , dir         = require('../dir.js');
+var express = require('express')
+  , dir     = require('../dir.js');
 
-module.exports = function(app) {
+/**
+ * Wyszukiwanie podrouterów w podanej ścieżce
+ * @param router Router rodzic
+ * @param root   Katalog przeszukania
+ */
+module.exports.requireRoutes = function(router, root) {
     dir(function(path) {
-        if (path !== 'routing')
-            app.use('/' + path, [
+        if (path.length && path !== 'routing')
+            router.use('/' + path, [
                 r = express.Router(),
-                require('./routes/' + path + '.js')(r)
+                require('./routes/' + root + path + '.js')(r)
             ][0]);
-    }, 'api/routes');
+    }, 'api/routes/' + root);
+    return router;
 };

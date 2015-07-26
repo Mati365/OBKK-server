@@ -1,9 +1,10 @@
-var permission  = require('../permission.js');
+var permission  = require('../permission.js')
+  , routing     = require('../routing.js');
 
 /** Schemas */
 var Schemas = require('../../schemas/schemas.js')
   , User    = Schemas.User
-  , Module = Schemas.Module;
+  , Module  = Schemas.Module;
 
 /** Funkcje API */
 var api = (function() {
@@ -71,8 +72,10 @@ var api = (function() {
 }());
 /** Routing api */
 module.exports = function(router) {
-    router
-        .use(permission.loggedOnly)
+    router.use(permission.loggedOnly);
+    /** Można jako fluent ale use() by nie działało dla autoryzacji */
+    routing
+        .requireRoutes(router, 'user/')
 
         /** API chronione */
         .get('/info', function(req, res) {
@@ -83,7 +86,6 @@ module.exports = function(router) {
                 .then(res.json.bind(res));
         })
 
-        /** API publiczne */
         .route('/:id')
             /** Informacje u użytkowniku */
             .get(function(req, res) {

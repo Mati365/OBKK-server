@@ -42,7 +42,7 @@ var api = (function() {
 
 module.exports = function(router) {
     /** Listowanie albumów */
-    router.get('/', function(req, res, next) {
+    router.get('/', function(req, res) {
         api.listAlbums().then(res.json.bind(res));
     });
 };
