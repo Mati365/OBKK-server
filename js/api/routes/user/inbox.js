@@ -1,9 +1,10 @@
-var q       = require('q')
-  , _       = require('underscore')
-  , config  = require('../../../config.js')
-  , Schemas = require('../../../schemas/schemas.js')
-  , Mail    = Schemas.Mail
-  , User    = Schemas.User;
+var q           = require('q')
+  , _           = require('underscore')
+  , ObjectId    = require('mongoose').Schema.ObjectId
+  , config      = require('../../../config.js')
+  , Schemas     = require('../../../schemas/schemas.js')
+  , Mail        = Schemas.Mail
+  , User        = Schemas.User;
 
 var api = (function() {
     /**
@@ -50,10 +51,12 @@ var api = (function() {
             .populate('sender receiver', 'info _id')
             .exec()
             .then(function(data) {
-                if(data.receiver._id != user._id
-                        && data.sender._id != user._id)
+                /** Odczytanie tylko przez odbiorce */
+                if(data.receiver._id == user._id)
+                    data.read = true;
+                else if(data.sender._id != user._id)
                     this.reject('Myślisz, że podglądniesz czyjąś wiadomość? ( ͡° ͜ʖ ͡°)');
-                data.read = true;
+
                 data.save();
                 return data;
             });
@@ -70,16 +73,27 @@ var api = (function() {
             .exec();
     };
 
+    function objectIdWithTimestamp(timestamp) {
+        if (typeof(timestamp) == 'string') {
+            timestamp = new Date(timestamp);
+        }
+        var hexSeconds = Math.floor(timestamp/1000).toString(16);
+        var constructedObjectId = ObjectId(hexSeconds + "0000000000000000");
+        console.log(hexSeconds + "0000000000000000");
+        return constructedObjectId
+    }
+
     /**
      * Listowanie tylko nagłówków listów, optymalizacja
      * wysyłam wszystko za jednym razem, dane dla 1tys listów
      * nie powinny być większe niż parest kilobajtow
      * @param user      Użytkownik z middleware
      * @param folder    Nazwa folderu
+     * @param lastDate  Data ostatniego listu
      */
     var userInfoFields   = 'email info.fullName info.name info.surname'
       , mailHeaderFields = 'date title sender read';
-    var listHeaders = function(user, folder) {
+    var listHeaders = function(user, folder, lastDate) {
         var defer = q.defer();
 
         /** Kompresowanie danych do wysyłki */
@@ -94,10 +108,17 @@ var api = (function() {
 
         /** Szukanie mail i zwracanie flag */
         User
-            .findOne({ _id: user._id, 'inbox._id': folder })
-            .select('inbox.$')
-            .populate('inbox.mails', mailHeaderFields)
-            .exec(function(err, data) {
+            .findOne({
+                  '_id': user._id
+                , 'inbox._id': folder
+            })
+            .select('inbox.$.mails')
+            .populate( 'inbox.mails'
+                    ,  mailHeaderFields
+                    , lastDate &&  { date: { $gt: lastDate }}
+                    ,  { limit: 200 })
+            .exec()
+            .then(function(data) {
                 data = data.inbox[0];
                 User.populate(data.mails.reverse(), {
                       path: 'sender'
@@ -180,7 +201,7 @@ module.exports = function(router) {
         /** Listowanie nagłówków maili z folderu */
         .get('/folder/:folder', function(req, res) {
             api
-                .listHeaders(req.user, req.params.folder)
+                .listHeaders(req.user, req.params.folder, req.query.lastDate)
                 .then(res.json.bind(res));
         })
 
