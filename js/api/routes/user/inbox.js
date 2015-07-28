@@ -73,16 +73,6 @@ var api = (function() {
             .exec();
     };
 
-    function objectIdWithTimestamp(timestamp) {
-        if (typeof(timestamp) == 'string') {
-            timestamp = new Date(timestamp);
-        }
-        var hexSeconds = Math.floor(timestamp/1000).toString(16);
-        var constructedObjectId = ObjectId(hexSeconds + "0000000000000000");
-        console.log(hexSeconds + "0000000000000000");
-        return constructedObjectId
-    }
-
     /**
      * Listowanie tylko nagłówków listów, optymalizacja
      * wysyłam wszystko za jednym razem, dane dla 1tys listów
@@ -92,16 +82,16 @@ var api = (function() {
      * @param lastDate  Data ostatniego listu
      */
     var userInfoFields   = 'email info.fullName info.name info.surname'
-      , mailHeaderFields = 'date title sender read';
+      , mailHeaderFields = 'date title receiver sender read';
     var listHeaders = function(user, folder, lastDate) {
         var defer = q.defer();
 
         /** Kompresowanie danych do wysyłki */
-        var compress = function(data) {
+        var compress = function(type, data) {
             return _.map(data, function(el) {
                 return _.extendOwn(
                       _(el).pick('_id', 'title', 'date', 'read')
-                    , _(el.sender.info).pick('fullName')
+                    , _(el[type].info).pick('fullName')
                 );
             });
         };
@@ -120,13 +110,16 @@ var api = (function() {
             .exec()
             .then(function(data) {
                 data = data.inbox[0];
+
+                /** Odbiorca widzi odbiorce */
+                var type = data.name == config.MAIL_FOLDERS.SENT[0] ? 'receiver' : 'sender';
                 User.populate(data.mails.reverse(), {
-                      path: 'sender'
+                      path: type
                     , select: userInfoFields
                 }, function(err, result) {
                     defer.resolve({
                           flags:   data.flags
-                        , headers: compress(result)
+                        , headers: compress(type, result)
                     });
                 });
             });
