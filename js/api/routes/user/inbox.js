@@ -69,7 +69,7 @@ var api = (function() {
     var listFolders = function(user) {
         return User
             .find({ _id: user._id })
-            .select('inbox.name inbox.icon inbox._id')
+            .select('inbox.flags inbox.name inbox.icon inbox._id')
             .exec();
     };
 
@@ -105,13 +105,13 @@ var api = (function() {
             .select('inbox.$.mails')
             .populate( 'inbox.mails'
                     ,  mailHeaderFields
-                    , lastDate &&  { date: { $gt: lastDate }}
-                    ,  { limit: 200 })
+                    ,  lastDate &&  { 'date': { $gt: lastDate }}
+                    ,  { limit: 200, sort: { 'date': 1 } })
             .exec()
             .then(function(data) {
                 data = data.inbox[0];
 
-                /** Odbiorca widzi odbiorce */
+                /** Odbiorca widzi nadawce */
                 var type = data.name == config.MAIL_FOLDERS.SENT[0] ? 'receiver' : 'sender';
                 User.populate(data.mails.reverse(), {
                       path: type
@@ -141,40 +141,110 @@ var api = (function() {
     /**
      * Zmiana folderu mail'a
      * @param user          Użytkownik z middleware
-     * @param folderId      Identyfikator folderu, w którym jest wiadomość
+     * @param folderId      Nazwa folderu, w którym jest wiadomość
      * @param messageId     Identyfikator wiadomości
-     * @param newFolderId   Identyfikator nowego folderu
+     * @param newFolderId   Nazwa nowego folderu
      */
     var moveMail = function(user, folderId, messageId, newFolderId) {
-        return User
+        //User.update(
+        //    { _id: user._id, 'inbox': { $elemMatch: { _id: folderId } } },
+        //    { $pull: { 'inbox.$.mails': messageId } }
+        //).exec();
+        var defer = q.defer();
+        User
             .findById(user._id)
-            .exec()
-            .then(function(data) {
-                data = data.toJSON();
-                var getFolder = function(id) {
-                    return _(data.inbox).findWhere({ id: id });
+            .exec(function(err, data) {
+                /** Listowanie nagłówków z folderu */
+                var headers = function(id) {
+                    return data.inbox.id(id).mails;
                 };
 
-                /** Folder źródłowy */
-                var source = getFolder(folderId);
-                source.mails = _(source.mails).without(messageId);
-                getFolder(newFolderId).mails.push(messageId);
+                /** Przenoszenie wiadomości */
+                headers(folderId).pull(messageId);
+                if(newFolderId)
+                    headers(newFolderId).push(messageId);
 
-                /** Aktualizowanie użytkowników */
-                return User
-                    .update({ _id: user._id }, data)
-                    .exec();
+                /** Zwracanie promise */
+                data.save(defer.resolve);
+            });
+        return defer.promise;
+    };
+
+    /**
+     * Kasowanie wiadomości to przerzucanie do folderu z koszem, jeśli jest już w koszu
+     * to przepada w niepamięć
+     * @param user      Użytkownik z middleware
+     * @param folderId  Identyfikator folderu
+     * @param messageId Identyfikator wiadomości
+     */
+    var removeMail = function(user, folderId, messageId) {
+        return User
+            .findOne({
+                  '_id': user._id
+                , 'inbox.name': config.MAIL_FOLDERS.REMOVED[0]
+            })
+            .select('inbox.$._id')
+            .exec().then(function(data) {
+                var newFolderId = data.inbox[0]._id;
+                return moveMail(
+                      user
+                    , folderId
+                    , messageId
+                    , newFolderId != folderId && newFolderId);
             });
     };
+
+    /**
+     * Dodawanie do folderu
+     * @param user  Użytkownik z middleware
+     * @param folderName
+     */
+    var createFolder = function(user, folderName) {
+        return User.update(
+              { _id: user._id }
+            , { '$push': { 'inbox' : { name: folderName } } }
+        ).exec();
+    };
+
+    /**
+     * Kasowanie folderu
+     * @param user      Użytkownik z middleware
+     * @param folderId  Id Identyfikator folderu
+     */
+    var removeFolder = function(user, folderId) {
+        return User.update(
+              { _id: user._id }
+            , { '$pull': { 'inbox' : { _id: folderId } } }
+        ).exec();
+    };
+
     return  { listFolders: listFolders
             , listHeaders: listHeaders
             , listReceivers: listReceivers
             , sendMail: sendMail
             , getMailData: getMailData
             , moveMail: moveMail
+            , removeMail: removeMail
+            , createFolder: createFolder
+            , removeFolder: removeFolder
             };
 }());
 module.exports = function(router) {
+    router.route('/folder/:folder')
+        /** Listowanie nagłówków maili z folderu */
+        .get(function(req, res) {
+            api
+                .listHeaders(req.user, req.params.folder, req.query.lastDate)
+                .then(res.json.bind(res));
+        })
+
+        /** Tworzenie nowego folderu */
+        .delete(function(req, res) {
+            api
+                .removeFolder(req.user, req.params.folder)
+                .then(res.sendStatus.bind(res, 200));
+        });
+
     router
         .get('/', function(req, res) {
             api
@@ -191,11 +261,11 @@ module.exports = function(router) {
                 .then(res.json.bind(res));
         })
 
-        /** Listowanie nagłówków maili z folderu */
-        .get('/folder/:folder', function(req, res) {
+        /** Tworzenie nowego folderu */
+        .put('/folder', function(req, res) {
             api
-                .listHeaders(req.user, req.params.folder, req.query.lastDate)
-                .then(res.json.bind(res));
+                .createFolder(req.user, req.body.name)
+                .then(res.sendStatus.bind(res, 200));
         })
 
         /** Wysyłanie wiadomości */
@@ -227,7 +297,17 @@ module.exports = function(router) {
             /** Kasowanie wiadomości */
             .delete(function(req, res) {
                 api
-                    .moveMail(req.user, req.params.folder, req.params.message, req.body.folder)
+                    .removeMail(req.user, req.params.folder, req.params.message)
+                    .then(res.json.bind(res));
+            })
+
+            /** Przenoszenie wiadomości */
+            .put(function(req, res) {
+                api
+                    .moveMail (req.user
+                             , req.params.folder
+                             , req.params.message
+                             , req.body.newFolder)
                     .then(res.json.bind(res));
             });
 };

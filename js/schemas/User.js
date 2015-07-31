@@ -14,10 +14,7 @@ var userSchema = new Schema({
         , required: true
         , index: { unique: true }
         }
-    , password: 
-        { type: String
-        , required: true
-        }
+    , password: String
     , salt: String
     , info: 
         { name: String
@@ -36,8 +33,8 @@ var userSchema = new Schema({
     , orders: [{ type: ObjectId, ref: 'Order' }]
     , inbox: [{
           name: String
-        , icon: String
-        , flags: { type: Number, default: 0 }
+        , icon: { type: String, default: 'folder-o' }
+        , flags: { type: Number, default:  flags.Inbox.MAIL_GROUPING | flags.Inbox.REMOVABLE }
         , mails: [{ type: ObjectId, ref: 'Mail' }]
     }]
     , disabled: Boolean
@@ -54,16 +51,16 @@ userSchema
 userSchema
     /**
      * Autoryzacja użytkownika, porównanie hashów
-     * @param  {String} pass    Hasło 
+     * @param pass    Hasło
      */
     .method('auth', function(password) {
         return this.encryptPassword(password) === this.password;
     })
     /**
      * Szyfrowanie hasła z solą
-     * @param  {String} password Hasło
-     * @param  {String} salt     Sól
-     * @return {String}          Hash
+     * @param  password Hasło
+     * @param  salt     Sól
+     * @return          Hash
      */
     .method('encryptPassword', function(password, salt) {
         salt = salt || this.salt;
@@ -75,8 +72,10 @@ userSchema
     /** Zapisywanie użytkownika do bazy */
     .pre('save', function(next) {
         var self = this;
-        this.salt = crypto.randomBytes(16);
-        this.password = this.encryptPassword(this.password);
+        if(!this.salt || !this.salt.length) {
+            this.salt = crypto.randomBytes(16);
+            this.password = this.encryptPassword(this.password);
+        }
 
         /** Tworzenie podstawowych folderów email użytkownika */
         if(!this.inbox || !this.inbox.length)
