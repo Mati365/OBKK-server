@@ -1,5 +1,4 @@
-var mongoose     = require('mongoose')
-  , deepPopulate = require('mongoose-deep-populate');
+var mongoose     = require('mongoose');
 
 mongoose.connection
     .on('error', console.error)
@@ -7,6 +6,4 @@ mongoose.connection
         console.log('Połączony!');
     });
 // mongoose.connect('mongodb://username:password@host:port/database?options...');
-mongoose
-    .plugin(deepPopulate)
-    .connect('mongodb://127.0.0.1/obkk');
+mongoose.connect('mongodb://127.0.0.1/obkk');
