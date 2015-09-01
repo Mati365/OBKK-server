@@ -43,8 +43,8 @@ var api = (function() {
         /** Tworzenie firmy */
         var createCompany = function(next) {
             /** Rejestracja firmy */
-            if(_.isEmpty(company) || _.isEqual(company, { users: [] }))
-                return next(null);
+            if(_.isEmpty(company) || !company.name)
+                return;
 
             /** Cache bo obiektu są kasowane */
             var cache = {
@@ -111,17 +111,17 @@ var api = (function() {
                 });
             }
             , function(cache, next) {
-            /** Współbieżne tworzenie nowych użytkowników */
-            async.each(
-                  cache.users
-                , createMember.bind(this, cache)
-                , function() {
-                    company.update({
-                        members: company.members
-                    }, next);
-                });
-            } ]
-            , _(callback).wrap(function(fn, err) {
+                /** Współbieżne tworzenie nowych użytkowników */
+                async.each(
+                      cache.users
+                    , createMember.bind(this, cache)
+                    , function() {
+                        company.update({
+                            members: company.members
+                        }, next);
+                    });
+                }
+            ], _(callback).wrap(function(fn, err) {
                 /** Sprzątanie po sobie */
                 if(err) {
                     user.remove && user.remove();
